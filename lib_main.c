@@ -52,7 +52,7 @@ void LoadBooks(FILE *f, Node*root){
     author = (char*)malloc(sizeof(char)*50);
     category = (char*)malloc(sizeof(char)*50);
     status = (char*)malloc(sizeof(char)*50);
-    while ( fscanf (f , "%d,%s,%s,%s,%s", id, title, author, category, status) ==5) {
+    while (fscanf(f,"%d,%s,%s,%s,%s", &id, title, author, category, status) ==5) {
         Book book;
         book.id = id;
         strcpy(title,book.title);
@@ -60,13 +60,24 @@ void LoadBooks(FILE *f, Node*root){
         strcpy(category,book.category);
         strcpy(status,book.status);
         insert_end(&root,book);
+        printf("%d,%s,%s,%s,%s",book.id,book.title,book.author,book.category,book.status);
     }
 }
 
-main(){
+void Search(Node *root, char item[50]){
+
+}
+
+int main(){
     Node* root=NULL;
     FILE *f = fopen("Books_data - Sheet1.csv", "r");
+    char item[50];
     LoadBooks(f,root);
-    
+    for(Node*current = root; current!=NULL; current = current->next){
+        Book currB = current->book;
+        printf("%d,%s,%s,%s,%s",currB.id,currB.title,currB.author,currB.category,currB.status);
+    }
+    //printf("Hello! Welcome to the Library Book Catalogue. To look up a book, or browse a genre please enter a book title, author, or genre.");
+    //scanf("%s",item);
     deallocate(&root);
 }
