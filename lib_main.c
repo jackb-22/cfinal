@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdbool.h>
 
 typedef struct book {
     int id;
@@ -69,7 +70,7 @@ void LoadBooks(FILE *f, Node **root) {
         book.category = malloc(50);
         book.status = malloc(50);
 
-        if (sscanf(line, "%d,%49[^,],%49[^,],%49[^,],%49[^]", &book.id, book.title, book.author, book.category, book.status) == 5) {
+        if (sscanf(line, "%d,%49[^,],%49[^,],%49[^,],%49[^,]", &book.id, book.title, book.author, book.category, book.status) == 5) {
             insert_end(root, book);
         } else {
             free(book.title);
@@ -87,8 +88,10 @@ void to_lowercase(char *dest, const char *src) {
     *dest = '\0';
 }
 
+void checkOut(Node *selectedBook);
 
-void Search(Node *root) {
+void Search(Node *root)
+{
     while (1) {
         char searchType[10];
         char searchTerm[50];
@@ -120,7 +123,7 @@ void Search(Node *root) {
 
             if (strstr(field, searchTermLower)) {
                 matches[count++] = current;
-                printf("%d. %s by %s (Genre: %s, Status: %s)\n", count, current->book.title, current->book.author, current->book.category, current->book.status);
+                printf("%d. %s by %s ,Genre: %s, Status: %s\n", count, current->book.title, current->book.author, current->book.category, current->book.status);
                 found = 1;
             }
             current = current->next;
@@ -143,21 +146,13 @@ void Search(Node *root) {
 
                 printf("Do you want to check out the book? (y/n): ");
                 char checkoutChoice;
-                scanf(" %c", &checkoutChoice);
+                scanf("%c", &checkoutChoice);
 
                 if (checkoutChoice == 'y') {
-                    if (strcmp(selectedBook->book.status, "available") == 0) {
-                        printf("The book is available. Checking it out...\n");
-                        free(selectedBook->book.status);
-                        selectedBook->book.status = strdup("issued");
-                    }
+                    checkOut(selectedBook);
                 }
             } else if (action == 'c') {
-                if (strcmp(selectedBook->book.status, "available") == 0) {
-                    printf("The book is available. Checking it out...\n");
-                    free(selectedBook->book.status);
-                    selectedBook->book.status = strdup("issued");
-                }
+                checkOut(selectedBook);
             } else {
                 printf("Invalid action.\n");
             }
@@ -184,18 +179,10 @@ void Search(Node *root) {
                     scanf(" %c", &checkoutChoice);
 
                     if (checkoutChoice == 'y') {
-                        if (strcmp(selectedBook->book.status, "available") == 0) {
-                            printf("The book is available. Checking it out...\n");
-                            free(selectedBook->book.status);
-                            selectedBook->book.status = strdup("issued");
-                        }
+                        checkOut(selectedBook);
                     }
                 } else if (action == 'c') {
-                    if (strcmp(selectedBook->book.status, "available") == 0) {
-                        printf("The book is available. Checking it out...\n");
-                        free(selectedBook->book.status);
-                        selectedBook->book.status = strdup("issued");
-                    }
+                    checkOut(selectedBook);
                 } else {
                     printf("Invalid action.\n");
                 }
@@ -217,6 +204,14 @@ void Search(Node *root) {
     }
 }
 
+void checkOut(Node *selectedBook)
+{
+    if (selectedBook->book.status[0]=='a'){
+        printf("The book is available. Checking it out...\n");
+    } else{
+        printf("Book not available\n");
+    }
+}
 
 int main() {
     Node *root = NULL;
@@ -236,6 +231,7 @@ int main() {
     }
 
     Search(root);
+
 
     deallocate(&root);
     return 0;
