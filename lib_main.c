@@ -88,8 +88,6 @@ void to_lowercase(char *dest, const char *src) {
     *dest = '\0';
 }
 
-void checkOut(Node *selectedBook);
-
 int changeAvailability(Node *selectedBook){
     char filename[50] = "Books_data - Sheet1.csv";
     char temp_filename[50] = "temp_Books_data - Sheet1.csv";
@@ -138,30 +136,71 @@ int changeAvailability(Node *selectedBook){
     return 0;
 }
 
-void ReturnBook(Node *root){
-    char bookreturn[100];
-    char bookReturnLower[100];
-    char action;
-    Node *current = root;
-    int found = 0;
-    printf("Please enter the name of the book you're returning: ");
-    scanf(" %s", bookreturn);
-    to_lowercase(bookReturnLower,bookreturn);
-    while (current != NULL) {
-        char field[100] = "";
-        to_lowercase(field,current->book.title);
-        if (strstr(field,bookReturnLower)) {
-            printf("Book Found: \n");
-            printf("%d. %s by %s ,Genre: %s, Status: %s\n", current->book.id, current->book.title, current->book.author, current->book.category, current->book.status);
-            printf("Returning...\n");
-            found = 1;
-            changeAvailability(current);
-            break;
-        }
-        current = current->next;
-    }
-    if (!found) printf("No books found matching the search criteria.\n");
+int changeAvailability1(Node *selectedBook){
+    char filename[50] = "Books_data - Sheet1.csv";
+    char temp_filename[50] = "temp_Books_data - Sheet1.csv";
+    char buffer[400], replace[400];
+    int replace_line = selectedBook->book.id;
+    FILE *file = fopen(filename,"r");
+    FILE *temp = fopen(temp_filename,"w");
 
+    if (selectedBook->book.status[0]=='i'){
+       strcpy(selectedBook->book.status,"available");
+    } else{
+       strcpy(selectedBook->book.status,"issued");
+    }
+
+    if (file == NULL || temp == NULL)
+    {
+        printf("File Error\n");
+        return 1;
+    }
+
+    bool keep_reading = true;
+    int current_line = 1;
+  
+    do{
+        fgets(buffer,400,file);
+        if (feof(file)) keep_reading = false;
+        else if (current_line == replace_line)
+            fprintf(temp, "%d,%s,%s,%s,%s\n", selectedBook->book.id,selectedBook->book.title,selectedBook->book.author,selectedBook->book.category,selectedBook->book.status);
+        else{
+            Book tempbook;
+            tempbook.title = malloc(50);
+            tempbook.author = malloc(50);
+            tempbook.category = malloc(50);
+            tempbook.status = malloc(50);
+            sscanf(buffer, "%d,%49[^,],%49[^,],%49[^,],%49[^]", &tempbook.id, tempbook.title, tempbook.author, tempbook.category, tempbook.status);
+            fprintf(temp, "%d,%s,%s,%s,%s", tempbook.id, tempbook.title, tempbook.author, tempbook.category, tempbook.status);
+        }
+        current_line++;
+    }while(keep_reading);
+    fprintf(temp, "");
+    fclose(file);
+    fclose(temp);
+    remove(filename);
+    rename(temp_filename, filename);
+
+    return 0;
+}
+
+void ReturnBook(Node *selectedBook){
+    if (selectedBook->book.status[0]=='i'){
+        printf("This book has been returned...\n");
+        changeAvailability1(selectedBook);
+    } else{
+        printf("Book is already in store\n");
+    }
+}
+
+void checkOut(Node *selectedBook)
+{
+    if (selectedBook->book.status[0]=='a'){
+        printf("The book is available. Checking it out...\n");
+        changeAvailability(selectedBook);
+    } else{
+        printf("Book not available\n");
+    }
 }
 
 void Search(Node *root)
@@ -210,24 +249,20 @@ void Search(Node *root)
             char action;
 
             printf("One book found: '%s' by %s.\n", selectedBook->book.title, selectedBook->book.author);
-            printf("Do you want details (d) or check out (c)? ");
+            printf("Do you want details (d) about the book, to check it out (c), or to return it (r)? ");
             scanf(" %c", &action);
 
             if (action == 'd') {
                 printf("Details:\n");
                 printf("ID: %d\nTitle: %s\nAuthor: %s\nCategory: %s\nStatus: %s\n",
                        selectedBook->book.id, selectedBook->book.title, selectedBook->book.author, selectedBook->book.category, selectedBook->book.status);
-
-                printf("Do you want to check out the book? (y/n): ");
-                char checkoutChoice;
-                scanf("%c", &checkoutChoice);
-
-                if (checkoutChoice == 'y') {
-                    checkOut(selectedBook);
-                }
             } else if (action == 'c') {
                 checkOut(selectedBook);
-            } else {
+            } else if (action == 'r'){
+                ReturnBook(selectedBook);
+            } 
+            
+            else {
                 printf("Invalid action.\n");
             }
         } else {
@@ -240,24 +275,19 @@ void Search(Node *root)
                 char action;
 
                 printf("You selected '%s' by %s.\n", selectedBook->book.title, selectedBook->book.author);
-                printf("Do you want details (d) or check out (c)? ");
+                printf("Do you want details about the book (d), to check it out (c), or to return it (r)? ");
                 scanf(" %c", &action);
 
                 if (action == 'd') {
                     printf("Details:\n");
                     printf("ID: %d\nTitle: %s\nAuthor: %s\nCategory: %s\nStatus: %s\n",
                            selectedBook->book.id, selectedBook->book.title, selectedBook->book.author, selectedBook->book.category, selectedBook->book.status);
-
-                    printf("Do you want to check out the book? (y/n): ");
-                    char checkoutChoice;
-                    scanf(" %c", &checkoutChoice);
-
-                    if (checkoutChoice == 'y') {
-                        checkOut(selectedBook);
-                    }
                 } else if (action == 'c') {
                     checkOut(selectedBook);
-                } else {
+                } else if (action =='r'){
+                    ReturnBook(selectedBook);
+                } 
+                else {
                     printf("Invalid action.\n");
                 }
             } else if (choice == 0) {
@@ -275,16 +305,6 @@ void Search(Node *root)
             printf("Exiting search.\n");
             break;
         }
-    }
-}
-
-void checkOut(Node *selectedBook)
-{
-    if (selectedBook->book.status[0]=='a'){
-        printf("The book is available. Checking it out...\n");
-        changeAvailability(selectedBook);
-    } else{
-        printf("Book not available\n");
     }
 }
 
